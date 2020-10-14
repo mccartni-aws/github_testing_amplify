@@ -14,7 +14,7 @@
   <script type = "text/javacript">
   function submitToAPI(e) {
     e.preventDefault();
-    var URL = "https://abc1234.execute-api.us-east-1.amazonaws.com/01/contact";
+    var URL = "https://fn3pkm8ht5.execute-api.us-east-1.amazonaws.com/002/contact-us";
 
           var Namere = /[A-Za-z]{1}[A-Za-z]/;
           if (!Namere.test($("#name-input").val())) {
@@ -147,7 +147,7 @@
         <button type="button">Submit</button>
       </form>
 
-      <!-- <form id="contact-form" method="post">
+      <form id="contact-form" method="post">
         <h4>Name:</h4>
         <input type="text" style="height:35px;" id="name-input" placeholder="Enter name here…" class="form-control" style="width:100%;" /><br/>
         <h4>Phone:</h4>
@@ -158,7 +158,7 @@
         <textarea id="description-input" rows="3" placeholder="Enter your message…" class="form-control" style="width:100%;"></textarea><br/>
         <div class="g-recaptcha" data-sitekey="6Lc7cVMUAAAAAM1yxf64wrmO8gvi8A1oQ_ead1ys" class="form-control" style="width:100%;"></div>
         <button type="button" onClick="submitToAPI(event)" class="btn btn-lg" style="margin-top:20px;">Submit</button>
-      </form> -->
+      </form>
 
       <h2 class="section-title">Sign Up to AWSome-B2</h2>
 

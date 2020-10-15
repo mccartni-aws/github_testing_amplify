@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'sam-app
+
+  Sample SAM Template for sam-app
+
+  '
+Parameters:
+  FunctionName:
+    Type: String
+    Default: DocumentDBRecipesFill
+    Description: The Lambda Function Name
+  LambdaLayerArn:
+    Type: String
+    Default: arn:aws:lambda:us-east-1:706927318824:layer:pymongolayer:1
+    Description: Copy the ARN of the Pymongodb lambda layer arn from your account
+  InfraStackName:
+    Description: Name of the base stack with all infra resources
+    Type: String
+    Default: RecipesInfrastructure
+  SecretManagerName:
+    Type: String
+    Default: docdbrecipescreds
+    Description: Enter the name you have given for the document db secrets manager
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 3008
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: recipesrawdata
+  DocumentDbFillFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: ${FunctionName}
+      CodeUri: DocumentDbFillFunction
+      Handler: lambda_test.recipes_handler
+      Layers:
+      - Fn::Sub: ${LambdaLayerArn}
+      Runtime: python3.8
+      Environment:
+        Variables:
+          secret_name:
+            Ref: SecretManagerName
+          region:
+            Ref: AWS::Region
+          pem_locator: rds-combined-ca-bundle.pem
+      Role:
+        Fn::GetAtt:
+        - LambdFunctionIAMRole
+        - Arn
+      Events:
+        S3Bucket:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: S3Bucket
+            Events: s3:ObjectCreated:*
+      VpcConfig:
+        SecurityGroupIds:
+        - Fn::ImportValue:
+            Fn::Sub: ${InfraStackName}-SecurityGroupId
+        SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: ${InfraStackName}-PrivateSubnet1
+        - Fn::ImportValue:
+            Fn::Sub: ${InfraStackName}-PrivateSubnet2
+  AllowS3ToCallLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Ref: DocumentDbFillFunction
+      Principal: s3.amazonaws.com
+      SourceAccount:
+        Ref: AWS::AccountId
+      SourceArn:
+        Fn::GetAtt:
+        - S3Bucket
+        - Arn
+  LambdFunctionIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: recipesrole
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:*
+            - ec2:CreateNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DeleteNetworkInterface
+            - s3:Get*
+            - s3:List*
+            - secretsmanager:*
+            Resource: '*'

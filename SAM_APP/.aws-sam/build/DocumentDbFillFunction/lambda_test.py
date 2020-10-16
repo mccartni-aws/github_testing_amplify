@@ -7,27 +7,30 @@ import os
 import ast
 from botocore.exceptions import ClientError
 
+# get values from environment variables
 secret_name = os.environ['secret_name']
 region_name = os.environ['region']
 pem_locator = os.environ['pem_locator']
-    
+
+# connect to s3 and secretsmanager
 session = boto3.session.Session()
 client_secret = session.client(service_name = 'secretsmanager', region_name = region_name)
 client_s3 = session.client(service_name = 's3', region_name = region_name, config=botocore.config.Config(s3={'addressing_style':'path'}))
 get_secret_value_response = "null"
-# get secret
+
+# get secret from secret manager
 try:
     get_secret_value_response = client_secret.get_secret_value(SecretId = secret_name)
 except ClientError as e:
     raise e
 	    
 secret_data = json.loads(get_secret_value_response['SecretString'])
-
 username = secret_data['username']
 password = secret_data['password']
 docdb_host = secret_data['host']
 docdb_port = str(secret_data['port'])
 
+# connect to documentDb
 db_client = pymongo.MongoClient('mongodb://'+username+':'+password+'@'+docdb_host+':'+docdb_port+'/?ssl=true&ssl_ca_certs='+pem_locator)
 
 def recipes_handler(event, context):
@@ -45,27 +48,13 @@ def recipes_handler(event, context):
 
     contents = data['Body'].read()
     data = json.loads(contents)
-    
-    # for test purposes select 3 objects
-    #data_three = data[0:3]
-     
-    testdb = db_client['testdb']
-    testcoll = testdb['recipes']
-    
-    # this is just for test purposes
-    #testcoll.drop()
+         
+    db = db_client['recipesdb']
+    collection = db['recipes']
 
-    ##Insert a single document
-    testcoll.insert_many(data)
+    ##Insert data from file into DocumentDB
+    collection.insert_many(data)
     
-    ##Find the document that was previously written
-    #x = testcoll.find_one({'title':'Amazon DocumentDB'})
-    #for doc in testcoll.find():
-        #print(doc)
-
-    number = testcoll.find().count()
-    
-    print(number)
     ##Close the connection
     db_client.close()
 

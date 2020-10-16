@@ -17,10 +17,10 @@ Parameters:
   InfraStackName:
     Description: Name of the base stack with all infra resources
     Type: String
-    Default: RecipesInfrastructure
+    Default: recipes-infrastructure
   SecretManagerName:
     Type: String
-    Default: docdbrecipescreds
+    Default: docdbrecipesaccess
     Description: Enter the name you have given for the document db secrets manager
 Globals:
   Function:

@@ -1,18 +1,17 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-    sam-app
+  sam-app
 
-    Sample SAM Template for sam-app
+  Sample SAM Template for sam-app
 Parameters:
-  FunctionName:
-    Type: String
-    Default: DocumentDBRecipesFill
-    Description: The Lambda Function Name
   LambdaLayerArn:
-    Type: String
-    Default: arn:aws:lambda:us-east-1:706927318824:layer:pymongolayer:1
-    Description: Copy the ARN of the Pymongodb lambda layer arn from your account
+    Type: CommaDelimitedList
+    Description: The list of lambda layers
+    Default: arn:aws:lambda:us-east-1:706927318824:layer:pymongolayer:1,
+      arn:aws:lambda:us-east-1:706927318824:layer:inflectlayer:1,
+      arn:aws:lambda:us-east-1:706927318824:layer:pandas_layer:1,
+      arn:aws:lambda:us-east-1:706927318824:layer:nltk_layer:3
   InfraStackName:
     Description: Name of the base stack with all infra resources
     Type: String
@@ -22,83 +21,103 @@ Parameters:
     Default: docdbrecipesaccess
     Description: Enter the name you have given for the document db secrets manager
 
-  
 Globals:
-    Function:
-        Timeout: 120
-        MemorySize: 3008 
-
+  Function:
+    Timeout: 120
+    MemorySize: 3008
 
 Resources:
+  # S3 Bucket that stores raw data with recipes
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: recipesrawdata
 
-    # S3 Bucket that stores raw data with recipes
-    S3Bucket:
-        Type: AWS::S3::Bucket
-        DeletionPolicy: Delete
-        Properties:
-            BucketName: recipesrawdata
+  S3Endpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:GetObject'
+            Resource: !Sub
+              - ${Arn}/*
+              - {Arn: !GetAtt S3Bucket.Arn }
+      RouteTableIds:
+        - Fn::ImportValue:
+            Fn::Sub: "${InfraStackName}-PrivateRouteTable1"
+        - Fn::ImportValue:
+            Fn::Sub: "${InfraStackName}-PrivateRouteTable2"
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcId: 
+        Fn::ImportValue: !Sub "${InfraStackName}-VPCid"
 
-    # Function that fills DocumentDBRecipes 
-    DocumentDbFillFunction:
-        Type: AWS::Serverless::Function
-        Properties:
-            FunctionName: !Sub ${FunctionName}
-            CodeUri: lambda_function/
-            Handler: lambda_test.recipes_handler
-            Layers:
-              - !Sub ${LambdaLayerArn}
-            Runtime: python3.8
-            Environment:
-                Variables:
-                    secret_name: !Ref SecretManagerName
-                    region: !Ref 'AWS::Region'
-                    pem_locator: rds-combined-ca-bundle.pem
-            Role: !GetAtt LambdFunctionIAMRole.Arn  
-            Events:
-                S3Bucket:
-                  Type: S3
-                  Properties:
-                    Bucket: !Ref S3Bucket
-                    Events: 's3:ObjectCreated:*'
- 
-            VpcConfig:
-                SecurityGroupIds:
-                        - Fn::ImportValue:
-                            Fn::Sub: "${InfraStackName}-SecurityGroupId"
-                SubnetIds:
-                        - Fn::ImportValue:
-                            Fn::Sub: "${InfraStackName}-PrivateSubnet1"
-                        - Fn::ImportValue:
-                            Fn::Sub: "${InfraStackName}-PrivateSubnet2"                            
+  # Function that fills DocumentDBRecipes
+  DocumentDbFillFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: DocumentDBRecipesFill
+      CodeUri: lambda_function/
+      Handler: put_recipes.recipes_handler
+      Layers:
+        - !Select [0, !Ref LambdaLayerArn]
+        - !Select [2, !Ref LambdaLayerArn]
+      Runtime: python3.8
+      Environment:
+        Variables:
+          secret_name: !Ref SecretManagerName
+          region: !Ref "AWS::Region"
+          pem_locator: rds-combined-ca-bundle.pem
+      Role: !GetAtt LambdFunctionIAMRole.Arn
+      Events:
+        S3Bucket:
+          Type: S3
+          Properties:
+            Bucket: !Ref S3Bucket
+            Events: "s3:ObjectCreated:*"
 
-    AllowS3ToCallLambdaPermission:
-        Type: AWS::Lambda::Permission
-        Properties:
-            Action: 'lambda:InvokeFunction'
-            FunctionName: !Ref DocumentDbFillFunction
-            Principal: s3.amazonaws.com
-            SourceAccount: !Ref 'AWS::AccountId'
-            SourceArn: !GetAtt S3Bucket.Arn
-            
-    LambdFunctionIAMRole:
-        Type: AWS::IAM::Role
-        Properties:
-            AssumeRolePolicyDocument:
-                Version: '2012-10-17'
-                Statement:
-                - Effect: Allow
-                  Principal:
-                    Service:
-                    - lambda.amazonaws.com
-                  Action:
-                    - sts:AssumeRole
-            Policies:
-            - PolicyName: recipesrole
-              PolicyDocument:
-                Version: '2012-10-17'
-                Statement:
-                - Effect: Allow
-                  Action:
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::ImportValue:
+              Fn::Sub: "${InfraStackName}-SecurityGroupId"
+        SubnetIds:
+          - Fn::ImportValue:
+              Fn::Sub: "${InfraStackName}-PrivateSubnet1"
+          - Fn::ImportValue:
+              Fn::Sub: "${InfraStackName}-PrivateSubnet2"
+
+  AllowS3ToCallLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref DocumentDbFillFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref "AWS::AccountId"
+      SourceArn: !GetAtt S3Bucket.Arn
+
+  LambdFunctionIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: recipesrole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
                   - logs:*
                   - ec2:CreateNetworkInterface
                   - ec2:DescribeNetworkInterfaces
@@ -106,4 +125,32 @@ Resources:
                   - s3:Get*
                   - s3:List*
                   - secretsmanager:*
-                  Resource: "*"
+                Resource: "*"
+
+  DocumentDbGetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: DocumentDBRecipesGet
+      CodeUri: lambda_function/
+      Handler: get_recipes.recipes_handler
+      Layers:
+        - !Select [0, !Ref LambdaLayerArn]
+        - !Select [1, !Ref LambdaLayerArn]
+        - !Select [3, !Ref LambdaLayerArn]
+      Runtime: python3.8
+      Environment:
+        Variables:
+          secret_name: !Ref SecretManagerName
+          region: !Ref "AWS::Region"
+          pem_locator: rds-combined-ca-bundle.pem
+      Role: !GetAtt LambdFunctionIAMRole.Arn
+
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::ImportValue:
+              Fn::Sub: "${InfraStackName}-SecurityGroupId"
+        SubnetIds:
+          - Fn::ImportValue:
+              Fn::Sub: "${InfraStackName}-PrivateSubnet1"
+          - Fn::ImportValue:
+              Fn::Sub: "${InfraStackName}-PrivateSubnet2"

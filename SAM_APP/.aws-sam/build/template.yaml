@@ -6,14 +6,11 @@ Description: 'sam-app
 
   '
 Parameters:
-  FunctionName:
-    Type: String
-    Default: DocumentDBRecipesFill
-    Description: The Lambda Function Name
   LambdaLayerArn:
-    Type: String
-    Default: arn:aws:lambda:us-east-1:706927318824:layer:pymongolayer:1
-    Description: Copy the ARN of the Pymongodb lambda layer arn from your account
+    Type: CommaDelimitedList
+    Description: The list of lambda layers
+    Default: arn:aws:lambda:us-east-1:706927318824:layer:pymongolayer:1, arn:aws:lambda:us-east-1:706927318824:layer:inflectlayer:1,
+      arn:aws:lambda:us-east-1:706927318824:layer:pandas_layer:1, arn:aws:lambda:us-east-1:706927318824:layer:nltk_layer:3
   InfraStackName:
     Description: Name of the base stack with all infra resources
     Type: String
@@ -32,15 +29,46 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       BucketName: recipesrawdata
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal: '*'
+          Action:
+          - s3:GetObject
+          Resource:
+            Fn::Sub:
+            - ${Arn}/*
+            - Arn:
+                Fn::GetAtt:
+                - S3Bucket
+                - Arn
+      RouteTableIds:
+      - Fn::ImportValue:
+          Fn::Sub: ${InfraStackName}-PrivateRouteTable1
+      - Fn::ImportValue:
+          Fn::Sub: ${InfraStackName}-PrivateRouteTable2
+      ServiceName:
+        Fn::Sub: com.amazonaws.${AWS::Region}.s3
+      VpcId:
+        Fn::ImportValue:
+          Fn::Sub: ${InfraStackName}-VPCid
   DocumentDbFillFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName:
-        Fn::Sub: ${FunctionName}
+      FunctionName: DocumentDBRecipesFill
       CodeUri: DocumentDbFillFunction
-      Handler: lambda_test.recipes_handler
+      Handler: put_recipes.recipes_handler
       Layers:
-      - Fn::Sub: ${LambdaLayerArn}
+      - Fn::Select:
+        - 0
+        - Ref: LambdaLayerArn
+      - Fn::Select:
+        - 2
+        - Ref: LambdaLayerArn
       Runtime: python3.8
       Environment:
         Variables:
@@ -109,3 +137,40 @@ Resources:
             - s3:List*
             - secretsmanager:*
             Resource: '*'
+  DocumentDbGetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: DocumentDBRecipesGet
+      CodeUri: DocumentDbGetFunction
+      Handler: get_recipes.recipes_handler
+      Layers:
+      - Fn::Select:
+        - 0
+        - Ref: LambdaLayerArn
+      - Fn::Select:
+        - 1
+        - Ref: LambdaLayerArn
+      - Fn::Select:
+        - 3
+        - Ref: LambdaLayerArn
+      Runtime: python3.8
+      Environment:
+        Variables:
+          secret_name:
+            Ref: SecretManagerName
+          region:
+            Ref: AWS::Region
+          pem_locator: rds-combined-ca-bundle.pem
+      Role:
+        Fn::GetAtt:
+        - LambdFunctionIAMRole
+        - Arn
+      VpcConfig:
+        SecurityGroupIds:
+        - Fn::ImportValue:
+            Fn::Sub: ${InfraStackName}-SecurityGroupId
+        SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: ${InfraStackName}-PrivateSubnet1
+        - Fn::ImportValue:
+            Fn::Sub: ${InfraStackName}-PrivateSubnet2

@@ -5,6 +5,7 @@ import pymongo
 import urllib.parse
 import os
 import ast
+import pandas as pd
 from botocore.exceptions import ClientError
 
 # get values from environment variables
@@ -23,7 +24,7 @@ try:
     get_secret_value_response = client_secret.get_secret_value(SecretId = secret_name)
 except ClientError as e:
     raise e
-	    
+
 secret_data = json.loads(get_secret_value_response['SecretString'])
 username = secret_data['username']
 password = secret_data['password']
@@ -48,17 +49,24 @@ def recipes_handler(event, context):
 
     contents = data['Body'].read()
     data = json.loads(contents)
-         
+    
+    df = pd.DataFrame(data)
+    # drop NaN and remove duplivated recipes
+    # duplicated recipes are those with same title and desc
+    df.dropna(subset = ['title'], inplace = True)
+    df.drop_duplicates(subset = ['title', 'desc'], keep = 'first', inplace = True)
+    resulted_data = json.loads(df.to_json(orient = 'records'))
+    
     db = db_client['recipesdb']
     collection = db['recipes']
 
     ##Insert data from file into DocumentDB
-    collection.insert_many(data)
+    collection.insert_many(resulted_data)
     
     ##Close the connection
     db_client.close()
 
     return {
         'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
+        'body': json.dumps('Recipes are put into database!')
     }

@@ -480,18 +480,10 @@
             "GroupDescription":"Allow access from VPC to DocumentDB",
             "VpcId":{
                "Ref":"VPC"
-            },
-            "SecurityGroupIngress":[
-               {
-                  "IpProtocol":"tcp",
-                  "FromPort":"27017",
-                  "ToPort":"27017",
-                  "CidrIp":"10.0.0.0/16"
-               }
-            ]
+            }
          }
       },
-      "InboundRule":{
+      "InboundRuleOne":{
          "Type":"AWS::EC2::SecurityGroupIngress",
          "Properties":{
             "IpProtocol":"tcp",
@@ -500,6 +492,26 @@
             "SourceSecurityGroupId":{
                "Fn::GetAtt":[
                   "Ec2TunnelSecurityGroup",
+                  "GroupId"
+               ]
+            },
+            "GroupId":{
+               "Fn::GetAtt":[
+                  "DocumentDBSecurityGroup",
+                  "GroupId"
+               ]
+            }
+         }
+      },
+      "InboundRuleTwo":{
+         "Type":"AWS::EC2::SecurityGroupIngress",
+         "Properties":{
+            "IpProtocol":"tcp",
+            "FromPort":27017,
+            "ToPort":27017,
+            "SourceSecurityGroupId":{
+               "Fn::GetAtt":[
+                  "DocumentDBSecurityGroup",
                   "GroupId"
                ]
             },
@@ -678,6 +690,26 @@
          "Export":{
             "Name":{
                "Fn::Sub":"${AWS::StackName}-PrivateSubnet1"
+            }
+         }
+      },
+      "PrivateRouteTable1":{
+         "Value":{
+            "Ref":"PrivateRouteTableOne"
+         },
+         "Export":{
+            "Name":{
+               "Fn::Sub":"${AWS::StackName}-PrivateRouteTable1"
+            }
+         }
+      },
+      "PrivateRouteTable2":{
+         "Value":{
+            "Ref":"PrivateRouteTableTwo"
+         },
+         "Export":{
+            "Name":{
+               "Fn::Sub":"${AWS::StackName}-PrivateRouteTable2"
             }
          }
       },

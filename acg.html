@@ -18,7 +18,7 @@ function submitData() {
                 var json = { Username: user, Password: pass };
                 $.ajax({
                     type: "POST",
-                    url: "https://n4mi40x9q7.execute-api.us-east-1.amazonaws.com/prod",
+                    url: "https://n4mi40x9q7.execute-api.us-east-1.amazonaws.com/prod/",
                     data: JSON.stringify(json),
                     beforeSend: function() { 
                         console.log("Before");

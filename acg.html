@@ -2,24 +2,14 @@
 <head>
     <meta charset="UTF-8">
 </head>
-<script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js">
 
-// function myFunction() {
-//     var xhttp = new XMLHttpRequest();
-//     xhttp.onreadystatechange = function() {
-//         if (this.readyState == 4 && this.status == 200) {
-//         document.getElementById("my-demo").innerHTML = this.responseText;
-//         }
-//     };
-//     xhttp.open("GET", "https://q66rzj78p2.execute-api.us-east-1.amazonaws.com/default/return-html-ingredients", true);
-//     xhttp.send();
-
-// }
 function submitData() {
                 var item = document.getElementById("Ingredients").value
                 // var pass = document.getElementById("Password").value
                 // var json = { Username: user, Password: pass };
                 var json = { Ingredients: item};
+
                 $.ajax({
                     type: "POST",
                     url: "https://ll18cwnii9.execute-api.us-east-1.amazonaws.com/prod_1/",

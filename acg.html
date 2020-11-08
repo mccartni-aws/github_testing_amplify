@@ -1,22 +1,47 @@
 <html>
 <script>
 
-function myFunction() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-        document.getElementById("my-demo").innerHTML = this.responseText;
-        }
-    };
-    xhttp.open("GET", "https://q66rzj78p2.execute-api.us-east-1.amazonaws.com/default/return-html-ingredients", true);
-    xhttp.send();
+// function myFunction() {
+//     var xhttp = new XMLHttpRequest();
+//     xhttp.onreadystatechange = function() {
+//         if (this.readyState == 4 && this.status == 200) {
+//         document.getElementById("my-demo").innerHTML = this.responseText;
+//         }
+//     };
+//     xhttp.open("GET", "https://q66rzj78p2.execute-api.us-east-1.amazonaws.com/default/return-html-ingredients", true);
+//     xhttp.send();
 
-}
+// }
+function submitData() {
+                var user = document.getElementById("Username").value
+                var pass = document.getElementById("Password").value
+                var json = { Username: user, Password: pass };
+                $.ajax({
+                    type: "POST",
+                    url: "https://n4mi40x9q7.execute-api.us-east-1.amazonaws.com/prod",
+                    data: JSON.stringify(json),
+                    beforeSend: function() { 
+                        console.log("Before");
+                        $("#submit").attr('disabled', true);
+                    },
+                    success: function(response){ 
+                        console.log(response);
+                        $("#submit").attr('disabled', false);
+                    }
+                });
+            }
 
 </script>
 <body><div align="center"><br><br><br><br>
 <h1>Hello <span id="my-demo">Cloud Gurus!</span></h1>
-<button onclick="myFunction()">Click me</button><br>
+<!-- <button onclick="myFunction()">Click me</button><br> -->
+<form onsubmit="submitData();return false;">
+    <label for="Username">Username:</label><br>
+    <input type="text" id="Username" name="Username" value=""><br>
+    <label for="password">Password:</label><br>
+    <input type="text" id="Password" name="Password" value=""><br><br>
+    <input type="submit" id="submit" value="Submit" >
+</form>
 <img src="https://s3.amazonaws.com/acloudguru-opsworkslab-donotdelete/ACG_Austin.JPG"></div>
 </body>
 </html>

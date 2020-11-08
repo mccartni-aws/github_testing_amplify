@@ -13,9 +13,10 @@
 
 // }
 function submitData() {
-                var user = document.getElementById("Username").value
-                var pass = document.getElementById("Password").value
-                var json = { Username: user, Password: pass };
+                var user = document.getElementById("Ingredients").value
+                // var pass = document.getElementById("Password").value
+                // var json = { Username: user, Password: pass };
+                var json = { Ingredients: item};
                 $.ajax({
                     type: "POST",
                     url: "https://n4mi40x9q7.execute-api.us-east-1.amazonaws.com/prod/",
@@ -36,10 +37,10 @@ function submitData() {
 <h1>Hello <span id="my-demo">Cloud Gurus!</span></h1>
 <!-- <button onclick="myFunction()">Click me</button><br> -->
 <form onsubmit="submitData();return false;">
-    <label for="Username">Username:</label><br>
-    <input type="text" id="Username" name="Username" value=""><br>
-    <label for="password">Password:</label><br>
-    <input type="text" id="Password" name="Password" value=""><br><br>
+    <label for="Ingredients">Ingredients:</label><br>
+    <input type="text" id="Ingredients" name="Ingredients" value=""><br>
+    <!-- <label for="password">Password:</label><br>
+    <input type="text" id="Password" name="Password" value=""><br><br> -->
     <input type="submit" id="submit" value="Submit" >
 </form>
 <img src="https://s3.amazonaws.com/acloudguru-opsworkslab-donotdelete/ACG_Austin.JPG"></div>

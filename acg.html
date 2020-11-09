@@ -21,23 +21,27 @@
     }
 })();
 
-function submitData(e) {
-                e.preventDefault();
+function submitData() {
+                // debugger
+                // console.log("test")
                 var item = document.getElementById("Ingredients").value
                 // var pass = document.getElementById("Password").value
                 // var json = { Username: user, Password: pass };
                 var json = { Ingredients: item};
-
+                // debugger
                 $.ajax({
                     type: "POST",
                     url: "https://zbars7ifb5.execute-api.us-east-1.amazonaws.com/production",
                     data: JSON.stringify(json),
                     beforeSend: function() { 
-                        console.log("Before");
+                        // console.log("Before");
                         $("#submit").attr('disabled', true);
                     },
                     success: function(response){ 
-                        console.log(response);
+                        // console.log(response);
+                        // debugger
+                        var logger = document.getElementById('log');
+                        logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(response) : response) + '<br />';
                         $("#submit").attr('disabled', false);
                     },
                     // success :function(response){
@@ -51,10 +55,10 @@ function submitData(e) {
 
 <body><div align="center"><br><br><br><br>
 <h1>Hello <span id="my-demo">Fellow Foodies!</span></h1>
-<form onsubmit="submitData(e);return false;">
+<form onsubmit="submitData();return false;">
     <label for="Ingredients">Ingredients:</label><br>
     <input type="text" id="Ingredients" name="Ingredients" value=""><br>
-    <input type="submit" id="submit" value="Submit" >
+    <input type="button" id="submit" value="Submit" onclick="submitData()">
 </form>
 <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max"></div>
 

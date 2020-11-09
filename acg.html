@@ -21,7 +21,8 @@
     }
 })();
 
-function submitData() {
+function submitData(e) {
+                e.preventDefault();
                 var item = document.getElementById("Ingredients").value
                 // var pass = document.getElementById("Password").value
                 // var json = { Username: user, Password: pass };
@@ -50,7 +51,7 @@ function submitData() {
 
 <body><div align="center"><br><br><br><br>
 <h1>Hello <span id="my-demo">Fellow Foodies!</span></h1>
-<form onsubmit="submitData();return false;">
+<form onsubmit="submitData(e);return false;">
     <label for="Ingredients">Ingredients:</label><br>
     <input type="text" id="Ingredients" name="Ingredients" value=""><br>
     <input type="submit" id="submit" value="Submit" >

@@ -50,8 +50,6 @@
         <dd>A: JavaScript executed in the browser sends data from a front-end API to a back-end lambda function through API gateway. </dd>
         <dt>Q: How did you ensure secure sign-up and sign-on?</dt>
         <dd>A: We use Amazon Cognito to provider user management and authentication functions to ensure secure sign-up and sign-on. After users submit their registration, Amazon Cognito will send a confirmation email with a verification code to the address they provided. To confirm their account, users will return to your site and enter their email address and the verification code they received. When users sign in, they enter their username (or email) and password. A JavaScript function then communicates with Amazon Cognito, authenticates using the Secure Remote Password protocol (SRP), and receives back a set of JSON Web Tokens (JWT). The JWTs contain claims about the identity of the user and will be used in the next module to authenticate against the RESTful API you build with Amazon API Gateway. </dd>
-        <dt>Q: ... </dt>
-        <dd>A: </dd>
       </dl>
     </div>
   </section>

@@ -1,59 +1,79 @@
-<!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width">
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html"/>
 
-        <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+<script src=
+"https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js">
+</script>
 
-        <link rel="stylesheet" href="css/font.css">
-        <link rel="stylesheet" href="css/normalize.css">
-        <link rel="stylesheet" href="css/index.css">
-        <link rel="stylesheet" href="/css/message.css">
-    </head>
-    <body>
-        <!--[if lt IE 7]>
-            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
-        <![endif]-->
+<script>
 
-        <div id="noCognitoMessage" class="configMessage" style="display: none;">
-            <div class="backdrop"></div>
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">No Cognito User Pool Configured</h3>
-                </div>
-                <div class="panel-body">
-                    <p>There is no user pool configured in <a href="/js/config.js">/js/config.js</a>. You'll configure this in Module 2 of the workshop.</p>
-                </div>
+(function () {
+    var old = console.log;
+    var logger = document.getElementById('log');
+    console.log = function (message) {
+        if (typeof message == 'object') {
+            logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(message) : message) + '<br />';
+        } else {
+            logger.innerHTML += message + '<br />';
+        }
+    }
+})();
+
+function submitData() {
+                // debugger
+                // console.log("test")
+                var item = document.getElementById("Ingredients").value
+                // var pass = document.getElementById("Password").value
+                // var json = { Username: user, Password: pass };
+                var json = { Ingredients: item};
+                // debugger
+                $.ajax({
+                    type: "POST",
+                    url: "https://zbars7ifb5.execute-api.us-east-1.amazonaws.com/production",
+                    data: JSON.stringify(json),
+                    beforeSend: function() { 
+                        // console.log("Before");
+                        $("#submit").attr('disabled', true);
+                    },
+                    success: function(response){ 
+                        // console.log(response);
+                        // debugger
+                        var logger = document.getElementById('log');
+                        logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(response) : response) + '<br />';
+                        $("#submit").attr('disabled', false);
+                    },
+                    // success :function(response){
+                    //     $("#contactResponse").show();
+                    //     var resp = response;    
+                    // }
+                });
+            }
+</script>
+</head>
+
+<body><div align="center"><br><br><br><br>
+<h1>Hello <span id="my-demo">Fellow Foodies!</span></h1>
+<form onsubmit="submitData();return false;">
+    <label for="Ingredients">Ingredients:</label><br>
+    <input type="text" id="Ingredients" name="Ingredients" value=""><br>
+    <input type="button" id="submit" value="Submit" onclick="submitData()">
+</form>
+<img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max"></div>
+
+<div id="log"></div>
+
+<!-- <div class="contentMain">
+    <h1>Search results</h1>
+
+        <div id="contactResponse">
+                   **Display search results(resp) in a fancy way**   
             </div>
-        </div>
-
-        <header>
-          <img src="images/awsome-white.png">
-        </header>
-
-        <section class="form-wrap">
-            <h1>Ingredients form to fill out</h1>
-            <form id="registrationForm">
-              <input type="email" id="emailInputRegister" placeholder="Ingredients" pattern=".*" required>
-              <input type="password" id="passwordInputRegister" placeholder="Password" pattern=".*" required>
-              <input type="password" id="password2InputRegister" placeholder="Confirm Password" pattern=".*" required>
-
-              <input type="submit" value="Let's Cook">
-            </form>
-        </section>
-
-        <script src="js/vendor/jquery-3.1.0.js"></script>
-        <script src="js/vendor/bootstrap.min.js"></script>
-        <script src="js/vendor/aws-cognito-sdk.min.js"></script>
-        <script src="js/vendor/amazon-cognito-identity.min.js"></script>
-        <script src="js/config.js"></script>
-        <script src="js/cognito-auth.js"></script>
-    </body>
+    </div> -->
+</body>
 </html>
+
+<!-- Want it to serve a message (with the POST), rather than try to serve a new page -->
+<!-- Want to clear the screen and repopulate -->
+<!-- Use the functionality within bootstrap to serve multiple pages. -->
